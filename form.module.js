@@ -2,14 +2,14 @@ const form = document.querySelector('form');
 
 
 
-function createObservable({ srcTarget, methods = [], callbacks = []}) {
+function createObservable({ srcTarget, methods = [], callbacks = [] }) {
 
      let handler = {}
-    
+
      return methods.map((method, i) => {
-          switch(method){
+          switch (method) {
                case 'apply': {
-                    handler =  {
+                    handler = {
                          [method](target, thisArg, args) {
                               callbacks[i](target, thisArg, args);
                               return target.apply(target, thisArg, args);
@@ -19,7 +19,13 @@ function createObservable({ srcTarget, methods = [], callbacks = []}) {
                }
                case 'set': {
                     handler = {
-                         [method](target, prop, value){
+                         [method](target, prop, value) {
+                              if (Array.isArray(target)) {
+                                   target.push(value)
+                                   callbacks[i](target, prop, value);
+
+                              }
+
                               if (target[prop]) {
                                    target[prop] = value;
                                    callbacks[i](target, prop, value);
@@ -33,9 +39,9 @@ function createObservable({ srcTarget, methods = [], callbacks = []}) {
 
                case 'get': {
                     handler = {
-                         [method](target, prop){
+                         [method](target, prop) {
                               if (target[prop]) {
-                                   
+
                                    callbacks[i](target, prop);
                                    return target[prop];
                               }
@@ -46,26 +52,59 @@ function createObservable({ srcTarget, methods = [], callbacks = []}) {
                }
           }
 
-          return  new Proxy(srcTarget, handler)
+          return new Proxy(srcTarget, handler)
      })
-   
-    
-   
+
+
+
 
 }
 
 
+///////////////////////////////
+
+let user = ['Peter', 'Jsck', 'Vova']
+
+function render(element, arr = []) {
+     const fragment = document.createDocumentFragment()
+     const div = document.createElement('div')
+     fragment.append(div)
+
+     const data = arr.map(item => (
+          `<div>${item}</div>`
+     )).join(" ")
+
+    
+     fragment.querySelector('div').innerHTML = data
+
+     document.querySelector(element).textContent = fragment.querySelector('div').textContent
+}
+
+function removeHtmlTags(str) {
+     return str.replace(/<[^>]+>/g, '');
+}
 
 const proxy = createObservable({
-     srcTarget: form.querySelector('input'),
+     srcTarget: user,
      methods: ['set', 'get', 'apply'],
      callbacks: [
-          (target, prop, value) => console.log(value),
+          (target, prop, value) => render('h2', target),
           (target, prop) => console.log(target[prop])
      ]
 })
 
-proxy[0].name = 2
 
+render('h2', user)
 
+form.addEventListener('submit', (e) => {
+     
+     e.preventDefault()
+
+     if(!form.querySelector('input').value){
+          return
+     }
+
+     proxy[0].push(removeHtmlTags(form.querySelector('input').value))
+     form.querySelector('input').value = ''
+})
 
