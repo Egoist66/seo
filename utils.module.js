@@ -1,12 +1,14 @@
 const form = document.querySelector('form');
 
+function removeHtmlTags(str) {
+     return str.replace(/<[^>]+>/g, '');
+}
 
-
-function createObservable({ srcTarget, methods = [], callbacks = [] }) {
+export function createObservable({ srcTarget, interceptors = [], callbacks = [] }) {
 
      let handler = {}
 
-     return methods.map((method, i) => {
+     return interceptors.map((method, i) => {
           switch (method) {
                case 'apply': {
                     handler = {
@@ -21,17 +23,24 @@ function createObservable({ srcTarget, methods = [], callbacks = [] }) {
                     handler = {
                          [method](target, prop, value) {
                               if (Array.isArray(target)) {
-                                   target.push(value)
+                                   if (Array.isArray(value)) {
+                                        target = [...target, ...value]
+                                   }
+
+                                   target = [...target, value]
                                    callbacks[i](target, prop, value);
 
                               }
-
-                              if (target[prop]) {
-                                   target[prop] = value;
-                                   callbacks[i](target, prop, value);
-                                   return true;
+                              else {
+                                   if (target[prop]) {
+                                        target[prop] = value;
+                                        callbacks[i](target, prop, value);
+                                        return true;
+                                   }
+                                   throw new Error('Such prop does not exist!');
                               }
-                              throw new Error('Such prop does not exist!');
+
+                             
                          }
                     }
                     break;
@@ -61,50 +70,21 @@ function createObservable({ srcTarget, methods = [], callbacks = [] }) {
 }
 
 
-///////////////////////////////
 
-let user = ['Peter', 'Jsck', 'Vova']
-
-function render(element, arr = []) {
+export function render(element, callback, arr = []) {
      const fragment = document.createDocumentFragment()
      const div = document.createElement('div')
      fragment.append(div)
 
      const data = arr.map(item => (
-          `<div>${item}</div>`
+          callback(item)
      )).join(" ")
 
-    
+
      fragment.querySelector('div').innerHTML = data
 
-     document.querySelector(element).textContent = fragment.querySelector('div').textContent
+     document.querySelector(element).innerHTML = fragment.querySelector('div').innerHTML
 }
 
-function removeHtmlTags(str) {
-     return str.replace(/<[^>]+>/g, '');
-}
 
-const proxy = createObservable({
-     srcTarget: user,
-     methods: ['set', 'get', 'apply'],
-     callbacks: [
-          (target, prop, value) => render('h2', target),
-          (target, prop) => console.log(target[prop])
-     ]
-})
-
-
-render('h2', user)
-
-form.addEventListener('submit', (e) => {
-     
-     e.preventDefault()
-
-     if(!form.querySelector('input').value){
-          return
-     }
-
-     proxy[0].push(removeHtmlTags(form.querySelector('input').value))
-     form.querySelector('input').value = ''
-})
 
