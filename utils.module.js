@@ -1,6 +1,6 @@
 const form = document.querySelector('form');
 
-function removeHtmlTags(str) {
+export function removeHtmlTags(str) {
      return str.replace(/<[^>]+>/g, '');
 }
 
@@ -40,7 +40,7 @@ export function createObservable({ srcTarget, interceptors = [], callbacks = [] 
                                    throw new Error('Such prop does not exist!');
                               }
 
-                             
+
                          }
                     }
                     break;
@@ -70,6 +70,28 @@ export function createObservable({ srcTarget, interceptors = [], callbacks = [] 
 }
 
 
+
+export function getMinMax(...numbers) {
+     return {
+          min: Math.min(...numbers),
+          max: Math.max(...numbers)
+     }
+}
+
+export function calc(a, b) {
+     return a + b
+}
+
+
+export function pipe(...fns) {
+     return (...args) => {
+          return fns.map(fn => ({ [fn.name]: fn(...args) }))
+     }
+
+}
+
+const compose = pipe(calc, getMinMax)
+const res = compose(1, 2, 3, 4, 5)
 
 export function render(element, callback, arr = []) {
      const fragment = document.createDocumentFragment()

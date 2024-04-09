@@ -1,17 +1,30 @@
 import { api } from "./api.module.js";
-import { createObservable, render } from "./utils.module.js";
+import { createObservable, render, pipe, calc, getMinMax } from "./utils.module.js";
 
+
+
+
+const compose = pipe(calc, getMinMax)
+const res = compose(1, 2, 3, 4, 5)
+
+res.forEach(item => console.log(item))
+
+
+
+
+let count = 5
 let state = {
      posts: []
 }
-
-let count = 5
-
 const observable = createObservable({
      srcTarget: state,
      interceptors: ['get', 'set'],
      callbacks: [
-          (target, prop) => console.log(target[prop]),
+
+          // get 
+          (target, prop) => console.log(target),
+
+          //set
           (target) => render('#out', (item) => {
                return `<div>
                   <h2>${item.title}</h2>
@@ -24,21 +37,16 @@ const observable = createObservable({
      ]
 })
 
+window.observable = observable
+
 api.get({
      url: `https://jsonplaceholder.typicode.com/posts?_limit=${count}`,
      responseType: 'json'
 })
      .then(data => {
-
           observable[1].posts = data
-
      })
-     .then(() => render('#out', (item) => {
-          return `<div>
-        <h2>${item.title}</h2>
-        <p>${item.id}</p>
-     </div>`
-     }, observable[1].posts))
+ 
 
 
 
@@ -58,4 +66,3 @@ document.querySelector('#fetch').addEventListener('click', () => {
 
 })
 
-observable[0].posts

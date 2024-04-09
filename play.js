@@ -79,6 +79,8 @@ function pipe(...fns) {
 
 }
 
+const compose = pipe(calc, getMinMax)
+const res = compose(1, 2, 3, 4, 5)
 
 class Team extends Array {
 
